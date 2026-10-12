@@ -7,7 +7,8 @@
 # 3. Consulta rápida de un producto por su ID
 
 # Solo para hacerme la vida mas facil
-from funcs import ask, save_data, load_data
+from funcs import ask, save_data, load_data, pick_supplier, confirm
+import sys
 
 # Memoria
 inventory = {}
@@ -17,22 +18,22 @@ def manage_suppliers(action):
     if action == "add":
         print("Añadiendo un nuevo proveedor. Por favor completa los siguientes datos:")
         while True:
-            supplier_id = ask("ID interno: ", check=lambda v: v != "" and v not in inventory, error="Ingresa un ID único y valido.")
+            sid = ask("ID interno: ", check=lambda v: v != "" and v.upper() not in inventory, error="Ingresa un ID único y valido.").upper()
             name = ask("Nombre legal: ", check=lambda v: v != "", error="Ingresa un nombre válido.")
             contact = ask("Correo electrónico de contacto: ", check=lambda v: "@" in v and "." in v, error="Ingresa una dirección de correo válida.")
             days = ask("Dias de entrega: ", int, lambda v: v > 0, "Ingresa un valor válido (Debe ser mayor a 0).")
             min_qty = ask("Cantidad mínima de ordenes por producto: ", int, lambda v: v > 0, "Ingresa un valor válido (Debe ser mayor a 0).")
             print(f"""
 Ingresaste la siguiente información: 
-ID Interno: {supplier_id}
+ID Interno: {sid}
 Nombre: {name}
 Correo electrónico: {contact}
 Dias de entrega de productos: {days}
 Cantidad minima de ordenes por producto: {min_qty}
             """)
-            confirm = ask("¿La información ingresada es correcta? (s/n/c): ", check=lambda v: v.lower() in ("s", "n", "c"), error="Responde s(i), n(o) o c(ancelar).").lower()
-            if confirm == "s":
-                inventory[supplier_id] = {
+            c = confirm()
+            if c == "s":
+                inventory[sid] = {
                     "name": name,
                     "contact": contact,
                     "active": True,
@@ -43,14 +44,43 @@ Cantidad minima de ordenes por producto: {min_qty}
                 print("Proveedor añadido.")
                 save_data(inventory)
                 break
-            elif confirm == "n":
+            elif c == "n":
                 print("Reiniciando.")
-            elif confirm == "c":
+            elif c == "c":
                 print("Cancelando.")
                 return
-
+            
     elif action == "remove":
-        pass
+        if not inventory:
+            print("No hay proveedores en la base de datos.")
+            return
+        print("Eliminando un proveedor. Mostrando los proveedores existentes:")
+        sid = pick_supplier(inventory, "Escribe el ID del proveedor a eliminar: ")
+        print(f"Proveedor seleccionado: {inventory[sid]['name']} ({sid})")
+        c = confirm("¿Deseas eliminar este proveedor? ")
+        if c == "s":
+            del inventory[sid]
+            save_data(inventory)
+            print("Proveedor eliminado.")
+        else:
+            print("No se han realizado cambios.")
+
+    elif action == "check":
+        if not inventory:
+            print("No hay proveedores en la base de datos.")
+            return
+        print("Mostrando la información de un proveedor en la base de datos.")
+        sid = pick_supplier(inventory, "Escribe el ID del proveedor a mostrar: ")
+        print(f"""
+Proveedor seleccionado:
+ID Interno: {sid}
+Nombre: {inventory[sid]['name']}
+Correo electrónico: {inventory[sid]['contact']}
+Dias de entrega de productos: {inventory[sid]['shipping_days']}
+Cantidad minima de ordenes por producto: {inventory[sid]['min_order_qty']}
+Productos: 
+""")    
+           
     else:
         print("Acción invalida.")
 
@@ -74,4 +104,8 @@ def main():
     else:
         manage_suppliers(action)
 
-main()
+try:
+    main()
+except KeyboardInterrupt:
+    print("\nCtrl+C was pressed. Exiting.")
+    sys.exit(0)
