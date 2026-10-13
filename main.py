@@ -6,9 +6,13 @@
 # 2. Habilidad de añadir o eliminar proveedores y productos
 # 3. Consulta rápida de un producto por su ID
 
-# Solo para hacerme la vida mas facil
+# Funciones de Python utilizadas que NO han sido explicadas:
+# 1. Importación de funciones de otro archivo
+# 2. Diccionarios
+# 3. Guardado y cargado de información JSON desde y hacia un archivo
+# 4. lambda (Tecnicamente es solo una función pequeña in-line, pero es mencionada por si acaso)
+
 from funcs import ask, save_data, load_data, pick_supplier, confirm, find_product
-import sys
 
 # Memoria
 inventory = {}
@@ -78,18 +82,17 @@ Nombre: {inventory[sid]['name']}
 Correo electrónico: {inventory[sid]['contact']}
 Dias de entrega de productos: {inventory[sid]['shipping_days']}
 Cantidad minima de ordenes por producto: {inventory[sid]['min_order_qty']}
-Productos: 
-""")    
-    for pid, product in inventory[sid]["products"].items():
-        print(f"  - {product['name']} ({pid}): {product['amount']} uds")     
+Productos:""")    
+        for pid, product in inventory[sid]["products"].items():
+            print(f"  - {product['name']} ({pid}): {product['amount']} uds")     
     else:
         print("Acción invalida.")
 
 def manage_products(action):
-    if action == "add":
-        if not inventory:
-            print("No puedes registrar productos sin un proveedor registrado anteriormente.")
+    if not inventory:
+            print("No puedes administrar productos sin un proveedor registrado anteriormente.")
             return
+    if action == "add":
         print("Añadiendo un producto. Selecciona el proveedor:")
         sid = pick_supplier(inventory, "ID del proveedor: ")
         while True:
@@ -109,8 +112,7 @@ Nombre: {name}
 Cantidad en stock: {amount}
 Costo de compra al proveedor: {cost}
 Precio de venta al público: {price}
-Reordenar cuando queden: {reorder_at} unidades.
-            """)
+Reordenar cuando queden: {reorder_at} unidades.""")
             if cost > price:
                 print("Advertencia: Estas vendiendo este producto a perdida (el costo al proveedor es mayor que el precio al público).")
             c = confirm()
@@ -131,6 +133,7 @@ Reordenar cuando queden: {reorder_at} unidades.
                 print("Cancelando.")
                 return
     elif action == "remove":
+        print("Eliminando un producto. Recuerda tener a la mano el ID interno del producto a eliminar.")
         pid = ask("ID del producto a eliminar: ", check=lambda v: v != "", error="Ingresa un ID.").upper()
         found = find_product(inventory, pid)
         if found is None:
@@ -146,16 +149,67 @@ Reordenar cuando queden: {reorder_at} unidades.
         else:
             print("No se han realizado cambios.")
     elif action == "check":
-        pass
+        print("Mostrando la información de un producto.")
+        pid = ask("ID del producto a mostrar: ", check=lambda v: v != "", error="Ingresa un ID.").upper()
+        found = find_product(inventory, pid)
+        if found is None:
+            print("El ID que ingresaste no corresponde a un producto en la base de datos.")
+            return
+        sid = found[0]
+        product = found[1]
+        print(f"""
+Producto seleccionado:
+ID Interno: {pid}
+Nombre: {product["name"]}
+Proveedor: {inventory[sid]["name"]}
+Cantidad en stock: {product["amount"]}
+Costo de compra al proveedor: {product["cost"]}
+Precio de venta al público: {product["price"]}
+Reordenar cuando queden: {product["reorder_at"]} unidades.""")
     else:
         print("Acción invalida.")
 
-def main():
-    # Hay que hacer el menú, asi que por ahora lo borrare
-    pass
 
+    
+
+def main():
+    inventory.update(load_data())
+    print("""
+Bienvenido al sistema de inventario Organizatio.
+(!!! No finalizado !!!)""")
+    while True:
+        print("""
+Selecciona una opción:
+1) Añadir un proveedor
+2) Eliminar un proveedor
+3) Consultar un proveedor
+
+4) Añadir un producto
+5) Eliminar un producto
+6) Consultar un producto
+
+0) Salir del programa.
+""")
+
+        choice = ask("Selecciona tu opción deseada: ", int, lambda v: v in range(7), "La opción ingresada no es válida.")
+        if choice == 1:
+            manage_suppliers("add")
+        if choice == 2:
+            manage_suppliers("remove")
+        if choice == 3:
+            manage_suppliers("check")
+        if choice == 4:
+            manage_products("add")
+        if choice == 5:
+            manage_products("remove")
+        if choice == 6:
+            manage_products("check")
+        if choice == 0:
+            print("Saliendo del programa.")
+            break
+        print("\nRegresando al menú principal.")
 try:
     main()
 except KeyboardInterrupt:
     print("\nCtrl+C was pressed. Exiting.")
-    sys.exit(0)
+    exit()
