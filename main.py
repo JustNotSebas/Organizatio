@@ -170,9 +170,6 @@ Reordenar cuando queden: {product["reorder_at"]} unidades.""")
     else:
         print("Acción invalida.")
 
-
-    
-
 def main():
     inventory.update(load_data())
     print("""
@@ -191,7 +188,6 @@ Selecciona una opción:
 
 0) Salir del programa.
 """)
-
         choice = ask("Selecciona tu opción deseada: ", int, lambda v: v in range(7), "La opción ingresada no es válida.")
         if choice == 1:
             manage_suppliers("add")

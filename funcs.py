@@ -20,6 +20,12 @@ def pick_supplier(inventory, prompt):
         print(f"- {data['name']} ({sid})")
     return ask(prompt, check=lambda v: v.upper() in inventory, error="El ID ingresado no corresponde a un proveedor válido.").upper()
 
+def find_product(inventory, pid):
+    for sid, supplier in inventory.items():
+        if pid in supplier["products"]:
+            return sid, supplier["products"][pid]
+    return None
+
 def save_data(data):
     with open("inventory.json", "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
@@ -31,9 +37,3 @@ def load_data():
     except (FileNotFoundError, json.JSONDecodeError):
         data = {}
     return data
-
-def find_product(inventory, pid):
-    for sid, supplier in inventory.items():
-        if pid in supplier["products"]:
-            return sid, supplier["products"][pid]
-    return None
