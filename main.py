@@ -7,7 +7,7 @@
 # 3. Consulta rápida de un producto por su ID
 
 # Solo para hacerme la vida mas facil
-from funcs import ask, save_data, load_data, pick_supplier, confirm
+from funcs import ask, save_data, load_data, pick_supplier, confirm, find_product
 import sys
 
 # Memoria
@@ -80,29 +80,79 @@ Dias de entrega de productos: {inventory[sid]['shipping_days']}
 Cantidad minima de ordenes por producto: {inventory[sid]['min_order_qty']}
 Productos: 
 """)    
-           
+    for pid, product in inventory[sid]["products"].items():
+        print(f"  - {product['name']} ({pid}): {product['amount']} uds")     
     else:
         print("Acción invalida.")
 
 def manage_products(action):
     if action == "add":
-        pass
+        if not inventory:
+            print("No puedes registrar productos sin un proveedor registrado anteriormente.")
+            return
+        print("Añadiendo un producto. Selecciona el proveedor:")
+        sid = pick_supplier(inventory, "ID del proveedor: ")
+        while True:
+            pid = ask("ID del producto: ",
+                    check=lambda v: v != "" and find_product(inventory, v.upper()) is None,
+                    error="Ingresa un ID único y válido. (Los ID no se pueden repetir, incluso entre diferentes proveedores.)").upper()
+            name = ask("Nombre del producto: ", check=lambda v: v != "", error="Ingresa un nombre válido.")
+            amount = ask("Cantidad en stock: ", int, lambda v: v >= 0, "Debe ser 0 o más.")
+            cost = ask("Costo al proveedor: ", float, lambda v: v > 0, "Debe ser mayor a 0.")
+            price = ask("Precio de venta: ", float, lambda v: v > 0, "Debe ser mayor a 0.")
+            reorder_at = ask("Reordenar cuando queden: ", int, lambda v: v >= 0, "Debe ser 0 o más.")
+            print(f"""
+Ingresaste la siguiente información: 
+Proveedor del producto: {inventory[sid]["name"]}
+ID Interno: {pid}
+Nombre: {name}
+Cantidad en stock: {amount}
+Costo de compra al proveedor: {cost}
+Precio de venta al público: {price}
+Reordenar cuando queden: {reorder_at} unidades.
+            """)
+            if cost > price:
+                print("Advertencia: Estas vendiendo este producto a perdida (el costo al proveedor es mayor que el precio al público).")
+            c = confirm()
+            if c == "s":
+                inventory[sid]["products"][pid] = {
+                    "name": name, 
+                    "amount": amount, 
+                    "cost": cost,
+                    "price": price, 
+                    "reorder_at": reorder_at,
+                }
+                save_data(inventory)
+                print("Producto añadido.")
+                break
+            elif c == "n":
+                print("Reiniciando.")
+            elif c == "c":
+                print("Cancelando.")
+                return
     elif action == "remove":
+        pid = ask("ID del producto a eliminar: ", check=lambda v: v != "", error="Ingresa un ID.").upper()
+        found = find_product(inventory, pid)
+        if found is None:
+            print("El ID que ingresaste no corresponde a un producto en la base de datos.")
+            return
+        sid = found[0]
+        product = found[1]
+        print(f"Producto seleccionado: {product['name']} ({pid}) de {inventory[sid]['name']}")
+        if confirm("¿Deseas eliminar este producto? ") == "s":
+            del inventory[sid]["products"][pid]
+            save_data(inventory)
+            print("Producto eliminado.")
+        else:
+            print("No se han realizado cambios.")
+    elif action == "check":
         pass
     else:
         print("Acción invalida.")
 
-def check_products():
-    pass
-
 def main():
-    global inventory
-    inventory = load_data()
-    action = input("== ")
-    if action == "print":
-        print(inventory)
-    else:
-        manage_suppliers(action)
+    # Hay que hacer el menú, asi que por ahora lo borrare
+    pass
 
 try:
     main()

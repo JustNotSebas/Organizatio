@@ -31,3 +31,9 @@ def load_data():
     except (FileNotFoundError, json.JSONDecodeError):
         data = {}
     return data
+
+def find_product(inventory, pid):
+    for sid, supplier in inventory.items():
+        if pid in supplier["products"]:
+            return sid, supplier["products"][pid]
+    return None
