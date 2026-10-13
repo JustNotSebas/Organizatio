@@ -8,9 +8,10 @@
 
 # Funciones de Python utilizadas que NO han sido explicadas:
 # 1. Importación de funciones de otro archivo
-# 2. Diccionarios
-# 3. Guardado y cargado de información JSON desde y hacia un archivo
+# 2. Diccionarios (incluido iteración con .items())
+# 3. Guardado y cargado de información JSON desde y hacia un archivo (with open())
 # 4. lambda (Tecnicamente es solo una función pequeña in-line, pero es mencionada por si acaso)
+# 5. Manejo de excepciones (try/except)
 
 from funcs import ask, save_data, load_data, pick_supplier, confirm, find_product
 
