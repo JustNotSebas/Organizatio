@@ -208,5 +208,5 @@ Selecciona una opción:
 try:
     main()
 except KeyboardInterrupt:
-    print("\nCtrl+C was pressed. Exiting.")
+    print("\nCtrl+C fue presionado. Saliendo.")
     exit()
