@@ -37,3 +37,23 @@ def load_data():
     except (FileNotFoundError, json.JSONDecodeError):
         data = {}
     return data
+
+def alert_line(inventory, sid, pid, product):
+    supplier = inventory[sid]
+    amount = product["amount"]
+    if amount < 0:
+        estado = f"SOBREVENDIDO ({-amount} uds por surtir)"
+    elif amount == 0:
+        estado = "AGOTADO"
+    else:
+        estado = f"{amount} uds"
+    return (f"{product['name']} ({pid}): {estado} (reordenar en {product['reorder_at']}) | "
+            f"{supplier['name']}: mínimo {supplier['min_order_qty']} uds, entrega en {supplier['shipping_days']} días")
+
+def get_alerts(inventory):
+    alerts = []
+    for sid, supplier in inventory.items():
+        for pid, product in supplier["products"].items():
+            if product["amount"] <= product["reorder_at"]:
+                alerts.append((sid, pid, product))
+    return alerts
